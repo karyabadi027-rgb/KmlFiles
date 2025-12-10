@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test Kematangan Buah (Upload Gambar)</title>
+
+  <!-- TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <!-- Teachable Machine Image -->
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    img {
+      max-width: 300px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+    }
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      text-align: left;
+      max-width: 400px;
+      margin: 10px auto;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Test Sensor Kematangan Buah (Upload Gambar)</h2>
+
+<input type="file" id="imageInput" accept="image/*">
+<br><br>
+
+<img id="preview" />
+<pre id="result">Hasil akan tampil di sini...</pre>
+
+<script>
+const URL = "C:/Users/myacer/Downloads/testMatang/"; // folder model
+let model;
+
+async function loadModel() {
+  model = await tmImage.load(
+    URL + "model.json",
+    URL + "metadata.json"
+  );
+  console.log("Model siap dipakai");
+}
+
+loadModel();
+
+document.getElementById("imageInput").addEventListener("change", async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const img = document.getElementById("preview");
+  img.src = URL.createObjectURL(file);
+
+  img.onload = async () => {
+    const predictions = await model.predict(img);
+
+    // ambil hasil paling tinggi
+    const best = predictions.reduce((a, b) =>
+      a.probability > b.probability ? a : b
+    );
+
+    const output =
+      "Hasil Deteksi:\n" +
+      "----------------------\n" +
+      "Kelas: " + best.className + "\n" +
+      "Akurasi: " + (best.probability * 100).toFixed(2) + "%\n\n" +
+      "Detail Semua Kelas:\n" +
+      JSON.stringify(predictions, null, 2);
+
+    document.getElementById("result").textContent = output;
+
+    // 🔥 Kirim ke App Inventor (jika dibuka via WebView)
+    if (window.AppInventor) {
+      window.AppInventor.setWebViewString(best.className);
+    }
+  };
+});
+</script>
+
+</body>
+</html>
